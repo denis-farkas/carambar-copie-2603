@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Blague Manager</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+      .container {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+      .actions {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+      }
+      button {
+        padding: 8px 16px;
+        background-color: #4caf50;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      button:hover {
+        background-color: #45a049;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      th,
+      td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: left;
+      }
+      th {
+        background-color: #f2f2f2;
+      }
+      tr:nth-child(even) {
+        background-color: #f9f9f9;
+      }
+      .create-form {
+        border: 1px solid #ddd;
+        padding: 15px;
+        margin-bottom: 20px;
+        background-color: #f9f9f9;
+      }
+      .form-group {
+        margin-bottom: 10px;
+      }
+      input,
+      textarea {
+        width: 100%;
+        padding: 8px;
+        box-sizing: border-box;
+        margin-top: 5px;
+      }
+      .joke-view {
+        border: 1px solid #ddd;
+        padding: 15px;
+        margin-top: 20px;
+        background-color: #f0f8ff;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Blague Manager</h1>
+
+    <div class="container">
+      <!-- Créer Form -->
+      <div class="create-form">
+        <h2>Créer une nouvelle Blague</h2>
+        <div class="form-group">
+          <label for="question">Question:</label>
+          <input type="text" id="question" placeholder="Enter joke question" />
+        </div>
+        <div class="form-group">
+          <label for="answer">Réponse:</label>
+          <input type="text" id="answer" placeholder="Enter joke answer" />
+        </div>
+        <button id="createJokeBtn">Créer Blague</button>
+      </div>
+
+      <!-- Actions -->
+      <div class="actions">
+        <button id="listAllBtn">Toutes nos blagues</button>
+        <button id="randomJokeBtn">Une blague au hasard</button>
+      </div>
+
+      <!-- Single Blague View -->
+      <div class="joke-view" id="jokeView" style="display: none">
+        <h3>Blague Sélectionnée</h3>
+        <p><strong>Question:</strong> <span id="viewQuestion"></span></p>
+        <p><strong>Réponse:</strong> <span id="viewAnswer"></span></p>
+      </div>
+
+      <!-- Jokes Table -->
+      <div>
+        <h2>Toutes nos blagues</h2>
+        <table id="jokesTable">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Question</th>
+              <th>Réponse</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="jokesTableBody">
+            <!-- Jokes will be loaded here -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <script>
+      // API base URL - CHANGE THIS to your actual API endpoint when deployed
+      const API_BASE_URL = "http://localhost:5007/jokes";
+
+      // DOM Elements
+      const listAllBtn = document.getElementById("listAllBtn");
+      const randomJokeBtn = document.getElementById("randomJokeBtn");
+      const createJokeBtn = document.getElementById("createJokeBtn");
+      const jokesTableBody = document.getElementById("jokesTableBody");
+      const jokeView = document.getElementById("jokeView");
+      const viewQuestion = document.getElementById("viewQuestion");
+      const viewAnswer = document.getElementById("viewAnswer");
+
+      // Function to load all jokes
+      async function loadAllJokes() {
+        try {
+          const response = await fetch(API_BASE_URL);
+          const jokes = await response.json();
+
+          // Clear the table
+          jokesTableBody.innerHTML = "";
+
+          // Add jokes to the table
+          jokes.forEach((joke) => {
+            const row = document.createElement("tr");
+            row.innerHTML = `
+                        <td>${joke.id}</td>
+                        <td>${joke.question}</td>
+                        <td>${joke.answer}</td>
+                        <td>
+                            <button onclick="viewJoke(${joke.id})">Voir</button>
+                        </td>
+                    `;
+            jokesTableBody.appendChild(row);
+          });
+        } catch (error) {
+          console.error("Erreur au chargement des blagues:", error);
+          alert(
+            "Erreur au chargement des blagues. Voir la console pour plus de détails."
+          );
+        }
+      }
+
+      // Function to get a random joke
+      async function loadRandomJoke() {
+        try {
+          const response = await fetch(`${API_BASE_URL}/random`);
+          const joke = await response.json();
+          displayJoke(joke);
+        } catch (error) {
+          console.error("Erreur au chargement d'une blaque au hasard:", error);
+          alert(
+            "Erreur au chargement d'une blague au hasard. Voir la console pour plus de détails."
+          );
+        }
+      }
+
+      // Function to view a specific joke
+      async function viewJoke(id) {
+        try {
+          const response = await fetch(`${API_BASE_URL}/${id}`);
+          const joke = await response.json();
+          displayJoke(joke);
+        } catch (error) {
+          console.error(`Erreur au chargement de la blague ${id}:`, error);
+          alert(
+            "Erreur au chargement d'une blague. Voir la console pour plus de détails."
+          );
+        }
+      }
+
+      // Function to display a joke in the view section
+      function displayJoke(joke) {
+        viewQuestion.textContent = joke.question;
+        viewAnswer.textContent = joke.answer;
+        jokeView.style.display = "block";
+      }
+
+      // Function to create a new joke
+      async function createJoke() {
+        const questionInput = document.getElementById("question");
+        const answerInput = document.getElementById("answer");
+
+        const question = questionInput.value.trim();
+        const answer = answerInput.value.trim();
+
+        if (!question || !answer) {
+          alert("Remplissez les champs de question et réponse.");
+          return;
+        }
+
+        try {
+          const response = await fetch(API_BASE_URL, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ question, answer }),
+          });
+
+          if (response.ok) {
+            // Clear form fields
+            questionInput.value = "";
+            answerInput.value = "";
+
+            // Reload jokes list
+            loadAllJokes();
+
+            alert("Blague créée avec succés!");
+          } else {
+            const error = await response.text();
+            throw new Error(error);
+          }
+        } catch (error) {
+          console.error("Erreur à créer la blague:", error);
+          alert(
+            "Erreur à créer la blague, voir la console pour plus de détails"
+          );
+        }
+      }
+
+      // Event listeners
+      listAllBtn.addEventListener("click", loadAllJokes);
+      randomJokeBtn.addEventListener("click", loadRandomJoke);
+      createJokeBtn.addEventListener("click", createJoke);
+
+      // Load jokes on page load
+      window.addEventListener("DOMContentLoaded", loadAllJokes);
+    </script>
+  </body>
+</html>
