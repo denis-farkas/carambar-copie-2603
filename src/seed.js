@@ -1,7 +1,7 @@
 import { Joke } from "./models/joke.js";
 import { sequelize } from "./db.js";
 
-const jokes = [
+const initialJokes = [
   { question: "Quelle est la femelle du hamster ?", answer: "L’Amsterdam" },
   { question: "Que dit un oignon quand il se cogne ?", answer: "Aïe" },
   {
